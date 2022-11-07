@@ -1,11 +1,11 @@
 # esp32wroom
 
-# Arduino IDE setup for board and library.
+## Arduino IDE setup for board and library.
 
 
-# Create secret.h file 
+## Create secret.h file 
 
 
-# Change MQTT broker ip address.
+## Change MQTT broker ip address.
 
 
