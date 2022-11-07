@@ -1,0 +1,7 @@
+# WiFi secret access keys 
+main/secret.h
+
+.idea
+.DS_Store
+.directory
+
