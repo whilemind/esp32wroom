@@ -14,7 +14,7 @@
 
 #define ON_BOARD_LED_PIN 2    // default on board led pin is 2
 
-#define DHTPIN 4    // Digital pin connected to the DHT sensor
+#define DHTPIN 21    // Digital pin connected to the DHT sensor
 // Feather HUZZAH ESP8266 note: use pins 3, 4, 5, 12, 13 or 14 --
 // Pin 15 can work but DHT must be disconnected during program upload.
 
@@ -30,8 +30,8 @@
  * varialbe value according to your configuration.
  */
  
-const char* mqttServer = "192.168.1.124";    // Set your MQTT Broker IP address
-const char* pubTopic = "/application/esp32wroom/dht11";
+const char* mqttServer = "10.130.1.150";    // Set your MQTT Broker IP address
+const char* pubTopic = "/application/esp32wroom/dht/11";
 const char* subTopic = "/application/esp32wroom/led";
 
 long lastMsg = 0;
@@ -63,7 +63,7 @@ struct DhtDataType {
 };
 
 DhtDataType dhtData;
-
+String jsonMsg;
 
 void setup() {
   Serial.begin(115200);
@@ -83,24 +83,25 @@ void loop() {
   client.loop();
 
   long now = millis();
-  if (now - lastMsg > 60000) {
+  if (now - lastMsg > 10000) {
     lastMsg = now;
 
     dhtData = getDhtSensorData();
-    static String msg = "{";
+    jsonMsg = "{";
     
     if(dhtData.humidityV == INVALID_DATA) {
       Serial.println("Failed to read ");
-      msg += "'status': 500, 'msg': 'ERROR: internal sensor error.'";       
+      jsonMsg += "'status': 500, 'msg': 'ERROR: internal sensor error.'";       
     } else {
-      msg += "'status': 200";
-      msg = "'humidity': " + String(dhtData.humidityV) + ",";
-      msg += "'temperatureC':" + String(dhtData.temperatureC) + "";
+      jsonMsg += "'status': 200, ";
+      jsonMsg += "'humidity': " + String(dhtData.humidityV) + ", ";
+      jsonMsg += "'temperatureC':" + String(dhtData.temperatureC) + ", ";
+      jsonMsg += "'temperatureF':" + String(dhtData.temperatureF) + "";
     }
 
-    msg += "}";  
-    Serial.println("Publishing message to broker: ");
-    client.publish(pubTopic, msg.c_str());      
+    jsonMsg += "}\r\n";  
+    Serial.println("Publishing message to broker: " + String(jsonMsg));
+    client.publish(pubTopic, jsonMsg.c_str());      
   }
 }
 
@@ -115,11 +116,16 @@ DhtDataType getDhtSensorData() {
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
   data.humidityV = dht.readHumidity();
+  Serial.println("Humidity value is: " + String(data.humidityV));
+//  Serial.println();
   
   // Read temperature as Celsius (the default)
   data.temperatureC = dht.readTemperature();
+  Serial.println("TemperatureC value is: " + String(data.temperatureC));
+
   // Read temperature as Fahrenheit (isFahrenheit = true)
   data.temperatureF = dht.readTemperature(true);
+  Serial.println("TemperatureF value is: " + String(data.temperatureF));
 
   // Check if any reads failed and exit early (to try again).
   if (isnan(data.humidityV) || isnan(data.temperatureC) || isnan(data.temperatureF)) {
